@@ -47,9 +47,7 @@ func recursoSinLlave(dir string) (string, bool) {
 }
 
 /*
-
-/recursos/ciencias 			plural GET  // a futuro también DELETE ????
-/recursos/ciencias/ 		singular POST  --------------------------------- en este caso no hay duda ---------
-/recursos/ciencias/sociales singular GET PUT DELETE  // OJO: "sociales" es una llave, no un subrrecurso...
-
+/recursos/ciencias 			plural GET               // a futuro también DELETE ?
+/recursos/ciencias/ 		singular POST            // en este caso no hay duda
+/recursos/ciencias/sociales singular GET PUT DELETE  // OJO: "sociales" es una llave, no un subrrecurso
 */

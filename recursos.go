@@ -6,11 +6,16 @@ import (
 )
 
 type Recurso struct {
-	DB  *gorm.DB //Nulo para usar la general
+	DB  *gorm.DB
 	Dir string
-	Obj interface{} // Necesario ???????????????????????
-	//Type reflect.Type
-	//Mtds []string //Nada para POST, GET, PUT, DELETE
+	Obj interface{}
+}
+
+func (r *Recurso) BD() *gorm.DB {
+	if r.DB != nil {
+		return r.DB
+	}
+	return M.DB
 }
 
 func recurso(dir string, obj interface{}, otros ...interface{}) *Recurso {
@@ -27,15 +32,11 @@ func recurso(dir string, obj interface{}, otros ...interface{}) *Recurso {
 	var R = new(Recurso)
 	R.Dir = dir
 	R.Obj = obj
-	//R.Type = reflect.Indirect(reflect.ValueOf(obj)).Type()
-	//R.Mtds = make([]string, 0)
 
 	for _, o := range otros {
 		switch o.(type) {
 		case *gorm.DB:
 			R.DB = o.(*gorm.DB)
-		//case []string:
-		//	R.Mtds = o.([]string)
 		default:
 			panic(fmt.Sprintf("Parámetro erróneo: %v", o))
 		}
@@ -43,21 +44,6 @@ func recurso(dir string, obj interface{}, otros ...interface{}) *Recurso {
 
 	return R
 }
-
-//
-//
-//
-
-func (r *Recurso) BD() *gorm.DB {
-	if r.DB != nil {
-		return r.DB
-	}
-	return M.DB
-}
-
-//
-//
-//
 
 func RegistrarRecurso(dir string, obj interface{}, otros ...interface{}) {
 	M.RegistrarRecurso(dir, obj, otros...)
@@ -72,21 +58,6 @@ func RegistrarRecursos(rcss []Recurso) {
 }
 func (m *Manejador) RegistrarRecursos(rcss []Recurso) {
 	for _, r := range rcss {
-		/*mtds := 0
-		if r.Mtds != nil {
-			mtds = len(r.Mtds)
-		}
-
-		if r.BD != nil && mtds > 0 {
-			m.RegistrarRecurso(r.Dir, r.Obj, r.BD, r.Mtds)
-		} else if r.BD != nil && mtds == 0 {
-			m.RegistrarRecurso(r.Dir, r.Obj, r.BD)
-		} else if r.BD == nil && mtds > 0 {
-			m.RegistrarRecurso(r.Dir, r.Obj, r.Mtds)
-		} else {
-			m.RegistrarRecurso(r.Dir, r.Obj)
-		}*/
-
 		if r.DB != nil {
 			m.RegistrarRecurso(r.Dir, r.Obj, r.DB)
 		} else {

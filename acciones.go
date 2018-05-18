@@ -18,7 +18,7 @@ import (
 //
 
 func Armar(obj interface{}, r *http.Request) error {
-	err := fd.Decode(obj, r.PostForm)
+	err := FD.Decode(obj, r.PostForm)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -80,6 +80,7 @@ func Editar(BD *gorm.DB, w http.ResponseWriter, r *http.Request, obj interface{}
 	var errEncontrar, errArmar, errVerificar, errEditar error
 
 	var llave = r.FormValue("Llave") // Pendiente -------------------------------------------------
+	//Obtener llave desde r también y comparar ------------ pendiente ------------
 
 	if len(llave) > 0 {
 		errEncontrar = BD.Where(fmt.Sprintf(`%s = ?`, PK), llave).First(Obj).Error //Pendiente cambiar lo del PK --------
@@ -104,9 +105,9 @@ func Listar(BD *gorm.DB, w http.ResponseWriter, r *http.Request, obj interface{}
 
 	sql, args := plbrs.Filtros(BD.NewScope(Obj), r)
 	if len(args) > 0 {
-		errListar = BD.Where(sql, args...).Find(Objs).Error
+		errListar = BD.Where(sql, args...).Order("fecha_creación DESC").Find(Objs).Error
 	} else {
-		errListar = BD.Find(Objs).Error
+		errListar = BD.Order("fecha_creación DESC").Find(Objs).Error
 	}
 
 	rspndr.Listado(w, Objs, errListar)

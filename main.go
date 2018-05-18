@@ -7,7 +7,7 @@ import (
 var (
 	PK = "id" // Cambiar esto -------- pendiente ------------
 
-	fd *form.Decoder
+	FD *form.Decoder
 )
 
 var Llave = struct {
@@ -20,5 +20,6 @@ var Llave = struct {
 } // esto cambia ------------------------ debe ir en M ----------- seguir aquí ---------------------
 
 func init() {
+	FD = form.NewDecoder()
 	M = manejador()
 }

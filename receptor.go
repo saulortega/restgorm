@@ -92,7 +92,7 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 		return
 	//case "DELETE":
 	//
-	//Pendiente -------------------------------------------
+	//Pendiente...
 	//
 	default:
 		responderMétodoNoAdmitido(w, r.Method)
