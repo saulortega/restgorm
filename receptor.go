@@ -11,6 +11,7 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 	M.Receptor(w, r)
 }
 func (m *Manejador) Receptor(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(32 << 20) //32 MB
 	//w.Header().Set("Access-Control-Allow-Origin", "http://localhost")                                //Al menos para pruebas. Probablemente se deba quitar...
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept") //necesario para dominio cruzado. Quitar después ...
