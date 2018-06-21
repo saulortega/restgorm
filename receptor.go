@@ -8,6 +8,9 @@ import (
 )
 
 func Receptor(w http.ResponseWriter, r *http.Request) {
+	M.Receptor(w, r)
+}
+func (m *Manejador) Receptor(w http.ResponseWriter, r *http.Request) {
 	//w.Header().Set("Access-Control-Allow-Origin", "http://localhost")                                //Al menos para pruebas. Probablemente se deba quitar...
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept") //necesario para dominio cruzado. Quitar después ...
@@ -19,7 +22,7 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 	log.Println("SOLICITUD "+r.Method+"::", r.URL.Path)
 
 	var exte bool
-	var R *Recurso
+	var R = new(Recurso)
 	var rcsSinLlave, snglr = recursoSinLlave(r.URL.Path)
 	var rcsConLlave, llave = recursoConLlave(r.URL.Path)
 
@@ -30,7 +33,7 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 		return
 	case "GET":
 		//
-		R, exte = M.Recursos[rcsSinLlave]
+		R, exte = m.Recursos[rcsSinLlave]
 		if exte {
 			if snglr { //No debería ser singular. Si lo es, es porque falta la llave
 				responderLlaveNoRecibida(w, r.URL.Path)
@@ -41,7 +44,7 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		R, exte = M.Recursos[rcsConLlave]
+		R, exte = m.Recursos[rcsConLlave]
 		if !exte { //Sí debería existir.
 			responderRecursoDesconocido(w, r.URL.Path)
 			return
@@ -60,7 +63,7 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 		// /algo
 		// /algo/
 		// /algo/+
-		R, exte = M.Recursos[rcsSinLlave]
+		R, exte = m.Recursos[rcsSinLlave]
 		if !exte {
 			responderRecursoDesconocido(w, r.URL.Path)
 			return
@@ -70,13 +73,13 @@ func Receptor(w http.ResponseWriter, r *http.Request) {
 
 		return
 	case "PUT":
-		R, exte = M.Recursos[rcsSinLlave]
+		R, exte = m.Recursos[rcsSinLlave]
 		if exte { //No debería existir. Si existe es porque no se recibió la llave
 			responderLlaveNoRecibida(w, r.URL.Path)
 			return
 		}
 
-		R, exte = M.Recursos[rcsConLlave]
+		R, exte = m.Recursos[rcsConLlave]
 		if !exte { //Sí debería existir.
 			responderRecursoDesconocido(w, r.URL.Path)
 			return

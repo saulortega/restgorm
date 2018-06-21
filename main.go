@@ -23,3 +23,7 @@ func init() {
 	FD = form.NewDecoder()
 	M = manejador()
 }
+
+func Nuevo() *Manejador {
+	return manejador()
+}
