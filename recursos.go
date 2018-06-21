@@ -6,16 +6,18 @@ import (
 )
 
 type Recurso struct {
-	DB  *gorm.DB
-	Dir string
-	Obj interface{}
+	DB        *gorm.DB
+	Dir       string
+	Obj       interface{}
+	manejador *Manejador
 }
 
 func (r *Recurso) BD() *gorm.DB {
 	if r.DB != nil {
 		return r.DB
 	}
-	return M.DB
+
+	return r.manejador.DB
 }
 
 func recurso(dir string, obj interface{}, otros ...interface{}) *Recurso {
@@ -50,6 +52,7 @@ func RegistrarRecurso(dir string, obj interface{}, otros ...interface{}) {
 }
 func (m *Manejador) RegistrarRecurso(dir string, obj interface{}, otros ...interface{}) {
 	R := recurso(dir, obj, otros...)
+	R.manejador = m
 	m.Recursos[R.Dir] = R
 }
 
