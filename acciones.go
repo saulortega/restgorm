@@ -17,7 +17,59 @@ import (
 //
 //
 
-func Armar(obj interface{}, r *http.Request) error {
+func llamarMétodo(mtdo string, obj interface{}, args []interface{}) []interface{} {
+	var reflectValues = []reflect.Value{}
+	var valueDirect = reflect.ValueOf(obj)
+	var argumentos = []reflect.Value{}
+	var valores = []interface{}{}
+	//var valueIndirect = reflect.Indirect(valueDirect)
+
+	for _, a := range args {
+		argumentos = append(argumentos, reflect.ValueOf(a))
+	}
+
+	var valueDir = valueDirect.MethodByName(mtdo)
+	var valueInd = reflect.Indirect(valueDirect).MethodByName(mtdo)
+	if valueDir.Kind() == reflect.Func {
+		reflectValues = valueDir.Call(argumentos)
+	} else if valueInd.Kind() == reflect.Func {
+		reflectValues = valueInd.Call(argumentos)
+	}
+
+	//if len(reflectValues) > 0 {
+	for _, v := range reflectValues {
+		valores = append(valores, v.Interface())
+	}
+	//}
+
+	return valores
+}
+
+func llamarMétodoRetornandoError(mtdo string, obj interface{}, argumentos []interface{}) error {
+	var valores = llamarMétodo(mtdo, obj, argumentos)
+	if len(valores) > 0 && valores[0] != nil {
+		return valores[0].(error)
+	}
+
+	return nil
+}
+
+func camposOmitir(obj interface{}) []string {
+	var valores = llamarMétodo("OmitirCampos", obj, []interface{}{})
+	var omitir = []string{}
+
+	if len(valores) > 0 && valores[0] != nil {
+		omitir = valores[0].([]string)
+	}
+
+	return omitir
+}
+
+//
+//
+//
+
+func Armar(obj interface{}, BD *gorm.DB, r *http.Request) error {
 	err := FD.Decode(obj, r.PostForm)
 	if err != nil {
 		log.Println(err)
@@ -25,6 +77,15 @@ func Armar(obj interface{}, r *http.Request) error {
 	}
 
 	conform.Strings(obj)
+
+	/*var argumentos = []interface{}{obj, BD, r}
+	var valores = llamarMétodo(obj, "Armar", argumentos)
+	if len(valores) > 0 && valores[0] != nil {
+		err = valores[0].(error)
+		if err != nil {
+			return err
+		}
+	}*/
 
 	return nil
 }
@@ -38,6 +99,29 @@ func Verificar(obj interface{}) error {
 	}
 
 	return err
+}
+
+/*func AntesDeEditar(obj interface{}, BD *gorm.DB, r *http.Request) error {
+	var argumentos = []interface{}{obj, BD, r}
+	var valores = llamarMétodo(obj, "AntesDeEditar", argumentos)
+	if len(valores) > 0 && valores[0] != nil {
+		err := valores[0].(error)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}*/
+
+func AntesDeEditar(obj interface{}, BD *gorm.DB, r *http.Request) error {
+	var argumentos = []interface{}{obj, BD, r}
+	return llamarMétodoRetornandoError("AntesDeEditar", obj, argumentos)
+}
+
+func AntesDeCrear(obj interface{}, BD *gorm.DB, r *http.Request) error {
+	var argumentos = []interface{}{obj, BD, r}
+	return llamarMétodoRetornandoError("AntesDeCrear", obj, argumentos)
 }
 
 //
@@ -61,13 +145,19 @@ func Crear(BD *gorm.DB, w http.ResponseWriter, r *http.Request, obj interface{})
 	var errArmar, errVerificar, errCrear error
 	var llave string
 
-	errArmar = Armar(Obj, r)
+	var omitir = camposOmitir(Obj)
+	omitir = append(omitir, "fecha_eliminación")
+
+	errArmar = Armar(Obj, BD, r)
 	if errArmar == nil {
 		errVerificar = Verificar(Obj)
 		if errVerificar == nil {
-			errCrear = BD.Create(Obj).Error
-			if errCrear == nil {
-				llave = llaveDesdeEstructura(Obj)
+			errVerificar = AntesDeCrear(Obj, BD, r)
+			if errVerificar == nil {
+				errCrear = BD.Omit(omitir...).Create(Obj).Error
+				if errCrear == nil {
+					llave = llaveDesdeEstructura(Obj)
+				}
 			}
 		}
 	}
@@ -79,17 +169,23 @@ func Editar(BD *gorm.DB, w http.ResponseWriter, r *http.Request, obj interface{}
 	var Obj = reflect.New(reflect.Indirect(reflect.ValueOf(obj)).Type()).Interface()
 	var errEncontrar, errArmar, errVerificar, errEditar error
 
+	var omitir = camposOmitir(Obj)
+	omitir = append(omitir, "fecha_creación", "fecha_eliminación")
+
 	var llave = r.FormValue("Llave") // Pendiente -------------------------------------------------
 	//Obtener llave desde r también y comparar ------------ pendiente ------------
 
 	if len(llave) > 0 {
 		errEncontrar = BD.Where(fmt.Sprintf(`%s = ?`, PK), llave).First(Obj).Error //Pendiente cambiar lo del PK --------
 		if errEncontrar == nil {
-			errArmar = Armar(Obj, r)
+			errArmar = Armar(Obj, BD, r)
 			if errArmar == nil {
 				errVerificar = Verificar(Obj)
 				if errVerificar == nil {
-					errEditar = BD.Omit("fecha_creación", "fecha_eliminación").Save(Obj).Error //Pendiente lo de las omisiones -------
+					errVerificar = AntesDeEditar(Obj, BD, r)
+					if errVerificar == nil {
+						errEditar = BD.Omit(omitir...).Save(Obj).Error //Pendiente lo de las omisiones -------
+					}
 				}
 			}
 		}
